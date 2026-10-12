@@ -158,6 +158,21 @@ describe('ClaudeAccountService', () => {
     expect(f.service.listAccounts().systemDefaultMayBeCopied).toBe(true)
   })
 
+  it("reports System default's login with no saved accounts, the login a paired server runs", () => {
+    const f = fixture([])
+    mkdirSync(join(f.root, 'personal'))
+    writeFileSync(
+      join(f.root, 'personal', '.claude.json'),
+      JSON.stringify({ oauthAccount: { emailAddress: 'me@example.test' } })
+    )
+    expect(f.service.listAccounts()).toMatchObject({
+      accounts: [],
+      activeAccountId: null,
+      systemDefaultEmail: 'me@example.test'
+    })
+    expect(f.service.listAccounts().systemDefaultMayBeCopied).toBeUndefined()
+  })
+
   it('saves an account only once its folder holds a login', async () => {
     const f = fixture()
     const begun = await f.service.beginSignIn({ runtime: 'host' })
