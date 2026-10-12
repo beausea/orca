@@ -9,6 +9,23 @@ type AccountsBlock = {
     host: string | null
     wsl: Record<string, string | null>
   }
+  /** Claude: the login System default holds, when the host could read it. */
+  systemDefaultEmail?: string
+  /** Codex: the resolved identity of the host's real ~/.codex. */
+  systemDefault?: { email: string | null }
+}
+
+/**
+ * The System default row: the host's own login, which runs whenever no saved account is selected
+ * for the host. Named when the host could read it, so a headless or paired server tells the user
+ * which login its sessions use even before any account is saved there.
+ */
+function formatSystemDefaultRow(block: AccountsBlock): string {
+  const email = block.systemDefaultEmail ?? block.systemDefault?.email ?? null
+  const hostActiveId = block.activeAccountIdsByRuntime
+    ? block.activeAccountIdsByRuntime.host
+    : block.activeAccountId
+  return `  system  System default${email ? `: ${email}` : ''}${hostActiveId === null ? ' (active)' : ''}`
 }
 
 export function formatDataAccounts(label: string, state: ManagedDataAccountsState): string {
@@ -26,8 +43,9 @@ export function formatDataAccounts(label: string, state: ManagedDataAccountsStat
 
 /** Renders a provider's managed-account list as a human-readable block, marking the active account. */
 export function formatAccountsBlock(label: string, block: AccountsBlock): string {
+  const system = formatSystemDefaultRow(block)
   if (block.accounts.length === 0) {
-    return `No managed ${label} accounts.`
+    return `No managed ${label} accounts.\n${system}`
   }
   const activeAccountIds = new Set([
     block.activeAccountId,
@@ -40,5 +58,5 @@ export function formatAccountsBlock(label: string, block: AccountsBlock): string
         account.needsSignIn ? ' (sign in again in Orca Settings > AI Provider Accounts)' : ''
       }`
   )
-  return `Managed ${label} accounts (${block.accounts.length}):\n${lines.join('\n')}`
+  return `Managed ${label} accounts (${block.accounts.length}):\n${system}\n${lines.join('\n')}`
 }

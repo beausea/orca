@@ -71,10 +71,11 @@ export class ClaudeAccountSelection {
       .map((account) => this.summarize(account))
       .sort((a, b) => b.updatedAt - a.updatedAt)
     const userConfigDir = this.runtimeAuth.router.userConfigDir()
-    // Why only with accounts, and at most every 5 s: the personal state file is large and every
-    // running Claude rewrites it, so a list would otherwise re-parse it on main each time.
-    const systemDefault =
-      accounts.length > 0 ? readClaudeFolderLogin(claudeStateFile(userConfigDir), 5_000) : null
+    // Why at most every 5 s: the personal state file is large and every running Claude rewrites
+    // it, so a list would otherwise re-parse it on main each time. Why also with no accounts: that
+    // is when System default is the only login, and the one a paired remote host runs; without a
+    // name the Accounts pane and `orca account list` cannot tell the user which login that is.
+    const systemDefault = readClaudeFolderLogin(claudeStateFile(userConfigDir), 5_000)
     return {
       accounts,
       activeAccountId: selection.host,
