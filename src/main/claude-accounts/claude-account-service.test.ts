@@ -163,15 +163,35 @@ describe('ClaudeAccountService', () => {
     mkdirSync(join(f.root, 'personal'))
     writeFileSync(
       join(f.root, 'personal', '.claude.json'),
-      JSON.stringify({ oauthAccount: { emailAddress: 'me@example.test' } })
+      JSON.stringify({
+        oauthAccount: { emailAddress: 'me@example.test', organizationUuid: 'me-org' }
+      })
     )
     expect(f.service.listAccounts()).toMatchObject({
       accounts: [],
       activeAccountId: null,
-      systemDefaultEmail: 'me@example.test'
+      activeAccountIdsByRuntime: { host: null, wsl: {} },
+      systemDefaultEmail: 'me@example.test',
+      systemDefaultOrganizationUuid: 'me-org'
     })
     expect(f.service.listAccounts().systemDefaultMayBeCopied).toBeUndefined()
   })
+
+  it.each([undefined, '{invalid json', '{}'])(
+    'lists an empty roster when the personal login is unavailable: %s',
+    (contents) => {
+      const f = fixture([])
+      if (contents !== undefined) {
+        mkdirSync(join(f.root, 'personal'))
+        writeFileSync(join(f.root, 'personal', '.claude.json'), contents)
+      }
+      expect(f.service.listAccounts()).toEqual({
+        accounts: [],
+        activeAccountId: null,
+        activeAccountIdsByRuntime: { host: null, wsl: {} }
+      })
+    }
+  )
 
   it('saves an account only once its folder holds a login', async () => {
     const f = fixture()
